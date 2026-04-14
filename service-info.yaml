@@ -31,6 +31,9 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    basicAuth:
+      type: http
+      scheme: basic
   schemas:
     Service:
       description: 'GA4GH service'
@@ -100,6 +103,8 @@ components:
           type: string
           description: 'Version of the service being described. Semantic versioning is recommended, but other identifiers, such as dates or commit hashes, are also allowed. The version should be changed whenever the service is updated.'
           example: '1.0.0'
+        capabilities:
+          $ref: '#/components/schemas/Capabilities'
     ServiceType:
       description: 'Type of a GA4GH service'
       type: object
@@ -120,3 +125,135 @@ components:
           type: string
           description: 'Version of the API or specification. GA4GH specifications use semantic versioning.'
           example: '1.0.0'
+    Capabilities:
+      description: |
+        Capabilities and limitations of this service. An extensible object where implementations
+        can describe service-specific features, hardware resources, and other system characteristics
+        as arbitrary key-value pairs.
+        
+        Each capability is represented as a CapabilityValue, which can include metadata such as
+        description, unit, and documentation links. This allows services to expose compute resources
+        (task.cpu_cores, task.memory_gb, task.gpu_count), feature support (authentication_required), service limits 
+        (max_concurrent_jobs, rate_limit_requests_per_hour), and custom service-specific capabilities.
+        
+        The `standard` object is reserved for GA4GH-recognized capability names. The `custom`
+        object is for implementation-specific or provider-specific extensions. Custom capabilities
+        should still align with GA4GH vocabularies where possible, such as the TES task resource model.
+      type: object
+      properties:
+        standard:
+          type: object
+          description: 'Standard GA4GH capability definitions.'
+          additionalProperties:
+            $ref: '#/components/schemas/CapabilityValue'
+        custom:
+          type: object
+          description: 'Custom service-specific capability definitions.'
+          additionalProperties:
+            $ref: '#/components/schemas/CapabilityValue'
+      example:
+        standard:
+          authentication_required:
+            value: true
+            description: 'Authentication is required to access this service'
+          search_supported:
+            value: true
+            description: 'The service supports search queries for tools, workflows, or datasets'
+          batch_jobs_supported:
+            value: false
+            description: 'Whether batch execution or queued tasks are supported'
+          data_access_supported:
+            value: true
+            description: 'Whether the service supports direct data access requests'
+        custom:
+          task.cpu_cores:
+            value: 32
+            description: 'ga4gh:api:Number of CPU cores available per task'
+            unit: 'cores'
+            specificationUrl: 'https://github.com/ga4gh/task-execution-schemas'
+          task.memory_gb:
+            value: 256
+            description: 'ga4gh:api:Amount of RAM available per task'
+            unit: 'GB'
+            specificationUrl: 'https://github.com/ga4gh/task-execution-schemas'
+          task.gpu_count:
+            value: 4
+            description: 'ga4gh:api:Number of GPUs available per task'
+            unit: 'gpus'
+            specificationUrl: 'https://github.com/ga4gh/task-execution-schemas'
+          supported_descriptor_types:
+            value:
+              - 'CWL'
+              - 'WDL'
+              - 'NFL'
+            description: 'Workflow descriptor formats supported by the service'
+          supported_digest_algorithms:
+            value:
+              - 'sha256'
+              - 'md5'
+            description: 'Digest algorithms supported by the service for identifiers or checksum validation'
+          drs_max_download_size_gb:
+            value: 100
+            description: 'Maximum file download size supported by the DRS endpoint'
+            unit: 'GB'
+          accelerators:
+            value:
+              - type: 'GPU'
+                count: 4
+              - type: 'TPU'
+                count: 2
+            description: 'Available accelerator types and counts'
+          batch_processing_supported:
+            value: true
+            description: 'Whether batch job processing is supported'
+    CapabilityValue:
+      type: object
+      description: |
+        A capability value with its metadata. The `value` field holds the actual capability
+        information, which can be any JSON type (string, number, boolean, object, array).
+        Additional metadata fields like `description`, `unit`, and URLs provide context.
+        
+        If a concrete `value` is provided, the `supported` field is usually redundant.
+        The `supported` field should be used only when a capability is known to be supported
+        but no specific concrete value is available.
+        
+        Use description prefixes such as `ga4gh:api:` to signal alignment with GA4GH or TES
+        vocabulary when describing task resource capabilities.
+      oneOf:
+        - required:
+            - value
+        - required:
+            - supported
+      properties:
+        value:
+          description: 'The actual capability value. Can be any JSON type (string, number, boolean, object, array, null).'
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: array
+            - type: object
+            - type: 'null'
+          example: 32
+        description:
+          type: string
+          description: 'Human-readable description of this capability. For semantic clarity, a prefix such as `ga4gh:api:` is recommended for GA4GH-aligned capabilities.'
+          example: 'ga4gh:api:Number of CPU cores available per task'
+        unit:
+          type: string
+          description: 'Optional unit of measurement for numeric values.'
+          example: 'cores'
+        supported:
+          type: boolean
+          description: 'Optional support indicator. Use only when a capability is supported but no specific concrete value is available.'
+          example: true
+        documentationUrl:
+          type: string
+          format: uri
+          description: 'URL to documentation of this capability.'
+          example: 'https://docs.example.com/capabilities/cpu'
+        specificationUrl:
+          type: string
+          format: uri
+          description: 'URL to an API specification or standard supporting this capability.'
+          example: 'https://specs.example.com/compute-resources'
