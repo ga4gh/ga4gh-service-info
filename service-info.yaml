@@ -98,8 +98,11 @@ components:
           example: 'test'
         version:
           type: string
-          description: 'Version of the service being described. Semantic versioning is recommended, but other identifiers, such as dates or commit hashes, are also allowed. The version should be changed whenever the service is updated.'
-          example: '1.0.0'
+          description: 'Version of the service deployment being described. Semantic versioning is recommended, but other identifiers, such as dates or commit hashes, are also allowed. This version should be changed whenever the service deployment is updated (e.g., configuration changes, data updates). It is distinct from the underlying software version (`Service.Implementation.version`), which tracks codebase changes.'
+          example: '2026.08-rev2'
+        implementation:
+          $ref: '#/components/schemas/Implementation'
+          description: 'Optional metadata about the software implementation used to provide this service.'
     ServiceType:
       description: 'Type of a GA4GH service'
       type: object
@@ -120,3 +123,24 @@ components:
           type: string
           description: 'Version of the API or specification. GA4GH specifications use semantic versioning.'
           example: '1.0.0'
+    Implementation:
+      description: 'Information about the specific software implementation powering the service.'
+      type: object
+      properties:
+        name:
+          type: string
+          description: 'Name of the software package or codebase.'
+          example: 'ga4gh-reference-implementation'
+        repositoryUrl:
+          type: string
+          format: uri
+          description: 'URL to the source code repository (RFC 3986 format).'
+          example: 'https://github.com/ga4gh/reference-implementation'
+        version:
+          type: string
+          description: 'Release version of the software codebase or engine. Semantic versioning is strongly recommended. This version should change only when the underlying source code is upgraded, patched, or rolled back. It is distinct from the deployment version (`Service.version`), which tracks changes to the live environment, configuration, or served data.'
+          example: 'v2.1.0'
+        license:
+          type: string
+          description: 'The license under which the software is distributed. SPDX identifiers are recommended.'
+          example: 'Apache-2.0'
