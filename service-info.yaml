@@ -179,6 +179,7 @@ components:
             Note: the GeoJSON standard does not provide specifications for
             the content of its `properties` object.
           type: object
+          additionalProperties: true
           required:
             - label
           properties:
